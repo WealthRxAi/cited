@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI visibility report — Cited</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/">Cited<span>AI visibility for CPA firms</span></a>
+  </header>
+  <main id="main" aria-live="polite"><p class="waiting muted">Loading the report…</p></main>
+  <footer class="bottom">
+    <p>How we check: answers come from Claude, an AI assistant, using live web search at the time of the check. AI answers vary from run to run and between assistants, so treat this as a snapshot, not a ranking.</p>
+    <p>Cited is made by LLCreativity LLC · 11185 Egeria Dr, Odessa, FL 33556 · <a href="mailto:salman@llcreativityllc.com">salman@llcreativityllc.com</a></p>
+  </footer>
+</div>
+<script src="/app.js"></script>
+<script>
+const main = document.getElementById("main");
+const qs = new URLSearchParams(location.search);
+const id = qs.get("id");
+const t0 = Date.now();
+
+function show(...nodes) { main.replaceChildren(...nodes.filter((n) => n != null)); }
+function fail(msg) { show(h("div", { class: "waiting" }, h("h2", {}, "This report isn't available"), h("p", { class: "muted" }, msg), h("a", { class: "btn", href: "/" }, "Run a new check"))); }
+
+const QUESTIONS = (c, s) => [
+  `Who are the best CPA firms in ${c}, ${s}?`,
+  `Which accountant should a small business in ${c} hire?`,
+  `A tax preparer in ${c} for someone self-employed?`,
+  `Which CPA firm in ${c} is good at small business tax planning?`,
+  `Who do I call in ${c} about an IRS letter?`,
+  `A good accounting firm near ${c} for a growing company?`,
+];
+
+function waiting(a) {
+  const secs = Math.round((Date.now() - t0) / 1000);
+  const on = Math.min(5, Math.floor(secs / 8));
+  show(h("div", { class: "waiting" },
+    h("h2", {}, `Checking ${a.firm_name}`),
+    h("p", { class: "muted" }, "An AI assistant is answering these questions with live web search. This usually takes under a minute; keep this page open."),
+    h("ol", {}, QUESTIONS(a.city, a.state).map((q, i) => h("li", { class: i === on ? "on" : null }, q)))));
+}
+
+function copyBox(text) {
+  const btn = h("button", { type: "button", onclick: async () => { try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; } catch { btn.textContent = "Select and copy"; } } }, "Copy");
+  return h("div", { class: "copybox" }, btn, text);
+}
+
+function fixpack(fp) {
+  if (!fp) return h("section", { class: "block pack" }, h("h2", {}, "Your fix pack"), h("p", { class: "muted" }, "It's being written now. Refresh in a minute; we'll also email it to you."));
+  return h("section", { class: "block pack" },
+    h("h2", {}, "Your fix pack"),
+    h("p", { class: "muted" }, "Anything in [BRACKETS] is a fact only you know; fill it in before you publish."),
+    h("h3", {}, "About section for your website"), copyBox(fp.about || ""),
+    h("h3", {}, "Google Business Profile description"), copyBox(fp.gbp_description || ""),
+    h("h3", {}, "FAQ answers for your website"),
+    (fp.faq || []).map((x) => h("details", { class: "ans" }, h("summary", {}, x.q), h("div", { class: "body" }, copyBox(x.a)))),
+    h("h3", {}, "Schema markup (paste into your site's <head>)"), copyBox(fp.schema_jsonld || ""),
+    h("h3", {}, "Listings to claim or update"),
+    h("ul", { class: "list" }, (fp.listings || []).map((l) => h("li", {}, h("span", {}, h("b", {}, l.site), " — ", l.action)))),
+    h("h3", {}, "Your first 30 days"),
+    (fp.plan_30_days || []).map((w) => h("div", { class: "fix" }, h("h3", {}, `Week ${w.week}`), h("ul", {}, (w.tasks || []).map((t) => h("li", {}, t))))));
+}
+
+function report(a) {
+  const r = a.result || {};
+  const per = r.per_question || [];
+  const answers = a.answers || [];
+  const qsList = a.queries || [];
+  const when = new Date(a.finished_at || a.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
+  const rows = qsList.map((q, i) => {
+    const p = per.find((x) => x.i === i) || { mentioned: false, firms_named: [] };
+    const others = (p.firms_named || []).filter((f) => !p.mentioned || p.rank == null || p.firms_named.indexOf(f) !== p.rank - 1);
+    return h("tr", {},
+      h("td", {}, h("div", { class: "q" }, q),
+        h("div", { class: "named" }, answers[i] && !answers[i].text ? "The assistant didn't answer this one." : (others.length ? "Named instead: " + others.join(", ") : "No firms named."))),
+      h("td", { class: "mark " + (p.mentioned ? "yes" : "no"), "aria-label": p.mentioned ? "named" : "not named" }, p.mentioned ? "✓" : "✗"));
+  });
+
+  const ledger = h("div", { class: "ledger" }, h("table", {},
+    h("thead", {}, h("tr", {}, h("th", {}, "What a prospect asked"), h("th", {}, a.firm_name))),
+    h("tbody", {}, rows),
+    h("tfoot", {}, h("tr", {}, h("td", {}, "Named in"), h("td", { class: "mark", style: "font-size:16px" }, `${r.mentioned ?? 0} of ${r.asked ?? qsList.length}`)))),
+    h("div", { class: "caption" }, a.website ? `Your website was used as a source in ${r.cited_as_source ?? 0} of ${r.asked ?? 6} answers.` : "Add your website to a new check to see whether the AI uses your own site as a source."));
+
+  const cta = a.paid ? null : h("div", { class: "cta" },
+    h("h2", {}, "Want us to fix it?"),
+    h("p", {}, "For $149 a month you get the fix pack today — About text, Google Business Profile description, eight AI-ready FAQ answers, schema markup and a 30-day plan — and this check re-run every month so you can see it working. Cancel anytime."),
+    h("button", { class: "btn", type: "button", onclick: checkout }, "Start for $149/month"),
+    h("p", { class: "status", id: "paystatus", style: "margin-top:12px" }));
+
+  show(
+    h("div", { class: "rep-head" },
+      h("p", { class: "muted small" }, `AI visibility check for ${a.firm_name}, ${a.city}, ${a.state} — ${when}`),
+      h("p", { class: "score" }, `Named in ${r.mentioned ?? 0} `, h("span", { class: "of" }, `of ${r.asked ?? 6} answers`)),
+      r.headline ? h("p", { class: "lede" }, r.headline) : null),
+    h("div", { class: "cols2" },
+      h("div", {}, ledger),
+      h("div", {},
+        h("h3", {}, "Firms the AI named most"),
+        h("ul", { class: "list" }, (r.competitors || []).slice(0, 8).map((c) => h("li", {}, h("span", {}, c.name), h("span", {}, `${c.times_named} of ${r.asked ?? 6}`)))),
+        h("h3", { style: "margin-top:26px" }, "Websites it trusted to decide"),
+        h("ul", { class: "list" }, (r.source_domains || []).slice(0, 8).map((d) => h("li", {}, h("span", {}, d.domain), h("span", {}, `${d.answers} answer${d.answers === 1 ? "" : "s"}`)))))),
+    h("section", { class: "block", style: "margin-top:48px" },
+      h("h2", {}, "What would get you named"),
+      (r.fixes || []).map((f) => h("div", { class: "fix" }, h("h3", {}, f.title), h("p", {}, f.why), h("p", {}, f.how))),
+      cta),
+    a.paid ? fixpack(a.fixpack) : null,
+    h("section", { class: "block" },
+      h("h2", {}, "The full answers"),
+      h("p", { class: "muted" }, "Exactly what the assistant said, and the pages it read."),
+      answers.map((x) => h("details", { class: "ans" }, h("summary", {}, x.q),
+        h("div", { class: "body" }, (x.text || "No answer.").replace(/\*\*/g, "")),
+        x.sources && x.sources.length ? h("div", { class: "src" }, "Sources: ", x.sources.map((s, i) => [i ? ", " : "", h("a", { href: s.url, rel: "nofollow noopener", target: "_blank" }, s.title || s.url)])) : null))));
+}
+
+async function checkout() {
+  const st = document.getElementById("paystatus");
+  st.className = "status"; st.textContent = "Opening secure checkout…";
+  try { const r = await api("/checkout", { method: "POST", body: JSON.stringify({ id }) }); if (r.url) location.href = r.url; else location.reload(); }
+  catch (e) { st.textContent = e.message; st.className = "status err"; }
+}
+
+async function load() {
+  if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return fail("The link is missing its report number.");
+  if (qs.get("cs")) { try { await api("/confirm", { method: "POST", body: JSON.stringify({ id, session_id: qs.get("cs") }) }); } catch { /* the report still loads */ } history.replaceState(null, "", "/r.html?id=" + id); }
+  let a;
+  try { a = await api("/audit/" + id); } catch (e) { return fail(e.message); }
+  if (a.status === "error") return fail(a.error || "The check didn't finish.");
+  if (a.status !== "done") { waiting(a); return setTimeout(load, 4000); }
+  document.title = `${a.firm_name}: AI visibility report — Cited`;
+  report(a);
+  if (a.paid && !a.fixpack) setTimeout(load, 8000);
+}
+load();
+</script>
+</body>
+</html>

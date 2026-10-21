@@ -1,0 +1,111 @@
+:root{
+  --paper:#EEF3E6;      /* columnar pad green */
+  --sheet:#F7FAF2;
+  --rule:#A9C2A3;       /* ledger rules */
+  --rule-soft:#CFDDC8;
+  --ink:#1B2A2F;
+  --graphite:#55635D;
+  --pencil:#C23B22;     /* red pencil: not named */
+  --tick:#2F6B3F;       /* green tick: named */
+  --focus:#E3B505;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Public Sans",system-ui,sans-serif;font-size:17px;line-height:1.55;font-variant-numeric:tabular-nums}
+a{color:var(--ink);text-underline-offset:3px}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+header.top{display:flex;justify-content:space-between;align-items:baseline;padding:22px 0;border-bottom:2px solid var(--ink)}
+.brand{font-weight:800;font-size:22px;letter-spacing:-.02em;text-decoration:none}
+.brand span{font-weight:400;font-size:14px;color:var(--graphite);margin-left:8px;letter-spacing:0}
+header.top nav a{color:var(--graphite);text-decoration:none;margin-left:20px;font-size:15px}
+header.top nav a:hover{color:var(--ink)}
+
+h1{font-size:clamp(34px,5vw,56px);line-height:1.04;letter-spacing:-.035em;font-weight:800;margin:0 0 18px;max-width:14em}
+h2{font-size:28px;letter-spacing:-.025em;font-weight:800;margin:0 0 12px;line-height:1.15}
+h3{font-size:18px;margin:0 0 4px;font-weight:700}
+p{margin:0 0 14px}
+.lede{font-size:19px;color:var(--graphite);max-width:34em}
+.muted{color:var(--graphite)}
+.small{font-size:14px}
+
+.hero{display:grid;grid-template-columns:1fr 1.05fr;gap:56px;padding:56px 0 64px;align-items:start}
+
+/* form */
+form.check{display:grid;grid-template-columns:1fr 1fr 88px;gap:12px 14px;margin-top:26px;max-width:560px}
+form.check .full{grid-column:1/-1}
+form.check .two{grid-column:span 2}
+label{display:block;font-size:14px;font-weight:600;margin:0 0 5px}
+label small{font-weight:400;color:var(--graphite)}
+input,select{width:100%;font:inherit;font-size:16px;padding:11px 12px;border:1.5px solid var(--ink);border-radius:3px;background:#fff;color:var(--ink)}
+.btn{display:inline-block;font:inherit;font-weight:700;font-size:17px;background:var(--ink);color:#fff;border:0;border-radius:3px;padding:14px 22px;cursor:pointer;text-decoration:none}
+.btn:hover{background:#2c4148}
+.btn[disabled]{opacity:.6;cursor:wait}
+.status{min-height:1.5em;font-size:15px;margin:10px 0 0}
+.status.err{color:var(--pencil)}
+
+/* the ledger: the one bold element */
+.ledger{background:var(--sheet);border:1.5px solid var(--ink);position:relative;overflow:hidden}
+.ledger table{width:100%;border-collapse:collapse;font-size:14.5px}
+.ledger th,.ledger td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule-soft)}
+.ledger thead th{font-size:13px;font-weight:700;color:var(--graphite);border-bottom:2px solid var(--rule);background:var(--paper)}
+.ledger td + td,.ledger th + th{border-left:1px solid var(--rule)}
+.ledger td.mark{width:84px;text-align:center;font-weight:800;font-size:18px}
+.ledger td.mark.yes{color:var(--tick)}
+.ledger td.mark.no{color:var(--pencil)}
+.ledger .q{font-weight:600}
+.ledger .named{color:var(--graphite);font-size:13.5px;margin-top:3px}
+.ledger tfoot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;background:var(--paper)}
+.ledger .caption{padding:10px 12px;font-size:13px;color:var(--graphite);border-top:1px solid var(--rule-soft)}
+.strike{position:relative;display:inline-block}
+.strike::after{content:"";position:absolute;left:-3px;right:-3px;top:52%;height:2px;background:var(--pencil);transform:rotate(-4deg)}
+
+section.block{padding:52px 0;border-top:2px solid var(--ink)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:36px;margin-top:24px}
+.steps p{color:var(--graphite);margin:0}
+.price{display:grid;grid-template-columns:1fr auto;gap:30px;align-items:center;background:var(--sheet);border:1.5px solid var(--ink);padding:28px;max-width:820px}
+.price .amt{font-size:40px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.price .amt small{font-size:15px;font-weight:400;color:var(--graphite);letter-spacing:0}
+.price ul{margin:10px 0 0;padding-left:20px;color:var(--graphite)}
+.price li{margin:4px 0}
+footer.bottom{padding:32px 0 48px;border-top:2px solid var(--ink);color:var(--graphite);font-size:14px}
+footer.bottom p{max-width:62em}
+
+/* report */
+.rep-head{padding:40px 0 28px}
+.score{font-size:clamp(40px,6vw,64px);font-weight:800;letter-spacing:-.04em;line-height:1;margin:0 0 12px}
+.score .of{color:var(--graphite);font-weight:400}
+.cols2{display:grid;grid-template-columns:1.4fr 1fr;gap:40px;align-items:start}
+.list{margin:0;padding:0;list-style:none}
+.list li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--rule)}
+.list li span:last-child{color:var(--graphite);white-space:nowrap}
+.fix{padding:16px 0;border-bottom:1px solid var(--rule)}
+.fix p{margin:4px 0 0;color:var(--graphite)}
+details.ans{border-bottom:1px solid var(--rule);padding:12px 0}
+details.ans summary{cursor:pointer;font-weight:600}
+details.ans .body{white-space:pre-wrap;color:var(--graphite);margin-top:10px;font-size:15.5px}
+details.ans .src{font-size:13.5px;margin-top:8px}
+.cta{background:var(--ink);color:#fff;padding:28px;margin:8px 0 0}
+.cta h2{color:#fff}
+.cta p{color:#C9D6CF}
+.cta .btn{background:#fff;color:var(--ink)}
+.cta .btn:hover{background:var(--paper)}
+.pack h3{margin-top:28px}
+.copybox{position:relative;background:#fff;border:1.5px solid var(--ink);padding:14px 16px;white-space:pre-wrap;font-size:15px}
+.copybox button{position:absolute;top:8px;right:8px;font:inherit;font-size:13px;font-weight:600;background:var(--paper);border:1px solid var(--ink);border-radius:3px;padding:4px 10px;cursor:pointer}
+.waiting{padding:60px 0}
+.waiting ol{color:var(--graphite);padding-left:22px}
+.waiting li.on{color:var(--ink);font-weight:600}
+
+@media (max-width:860px){
+  .hero,.cols2{grid-template-columns:1fr;gap:36px;padding-top:32px}
+  .steps{grid-template-columns:1fr;gap:20px}
+  .price{grid-template-columns:1fr}
+  header.top nav{display:none}
+  form.check{grid-template-columns:1fr 88px}
+  form.check .two{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:no-preference){
+  .strike::after{transform-origin:left;animation:pencil .5s ease-out .6s both}
+  @keyframes pencil{from{transform:rotate(-4deg) scaleX(0)}to{transform:rotate(-4deg) scaleX(1)}}
+}
