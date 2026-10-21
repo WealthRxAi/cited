@@ -351,6 +351,74 @@ async function runRechecks(): Promise<number> {
   return due.length;
 }
 
+// ─── Outreach: audit each prospect, then write a first email from its own result ───
+const CHAINS = /\b(jackson hewitt|h&r block|h & r block|liberty tax|1-800accountant|remotebooksonline|turbotax|intuit|bench|pilot|kay jewelers|kay\b|zales|jared|helzberg|shane co|brilliant earth|blue nile|ben bridge|pandora|costco|macy|walmart|sam's club|jcpenney|signet|tiffany)/i;
+const TOPICS: Record<Vertical, string[]> = {
+  cpa: ["best CPA firm", "an accountant for a small business", "a self-employed tax preparer", "small business tax planning", "help with an IRS letter", "an accounting firm for a growing company"],
+  tax_prep: ["a good tax preparer", "taxes for someone self-employed", "help with an IRS letter", "an enrolled agent", "getting taxes done for a fair price", "small business bookkeeping"],
+  jeweler: ["where to buy an engagement ring", "a jeweler for custom engagement rings", "jewelry repair", "an anniversary gift", "a trustworthy independent jewelry store", "wedding bands"],
+};
+const ASKERS: Record<Vertical, string> = { cpa: "someone in {city} might ask when looking for an accountant", tax_prep: "someone in {city} might ask when looking for help with their taxes", jeweler: "a shopper in {city} might ask when looking for a jeweler" };
+
+function listJoin(xs: string[], word = "and") { return xs.length <= 1 ? (xs[0] ?? "") : xs.slice(0, -1).join(", ") + ` ${word} ` + xs[xs.length - 1]; }
+
+function composeEmail(p: Record<string, any>, a: Record<string, any>): { subject: string; body: string } | null {
+  const r = a.result;
+  if (!r || !r.asked) return null;
+  const v = (VERTICALS.has(a.vertical) ? a.vertical : "cpa") as Vertical;
+  const share = r.mentioned / r.asked;
+  if (share >= 0.75) return null; // already named in most answers: nothing to sell
+  const rivals = (r.competitors as { name: string; times_named: number }[]).filter((c) => !CHAINS.test(c.name) && c.times_named >= 2).slice(0, 2);
+  const per = (r.per_question ?? []) as { i: number; named_count: number; runs: number }[];
+  const gaps = per.filter((q) => q.runs > 0 && q.named_count === 0).map((q) => TOPICS[v][q.i]).filter(Boolean);
+  const name = a.firm_name as string, city = a.city as string;
+  const hi = p.contact_first ? `Hi ${p.contact_first},` : `Hi,`;
+  const examples = TOPICS[v].slice(0, 3).map((t) => `"${t}"`).join(", ");
+  const lines: string[] = [hi, ""];
+  lines.push(`I asked an AI assistant (Claude, with live web search) six questions ${ASKERS[v].replace("{city}", city)}: ${examples}, and three more. I asked each one twice.`);
+  lines.push("");
+  const you = r.mentioned === 0 ? `${name} didn't come up in any of the ${r.asked} answers.` : `${name} came up in ${r.mentioned} of the ${r.asked} answers.`;
+  const them = rivals.length === 2 ? ` ${rivals[0].name} came up in ${rivals[0].times_named}, ${rivals[1].name} in ${rivals[1].times_named}.`
+    : rivals.length === 1 ? ` ${rivals[0].name} came up in ${rivals[0].times_named}.` : "";
+  lines.push(you + them);
+  if (r.mentioned > 0 && gaps.length) lines.push(`You weren't named at all when someone asked about ${listJoin(gaps.slice(0, 3), "or")}.`);
+  lines.push("");
+  const srcs = (r.source_domains as { domain: string }[]).map((d) => d.domain).filter((d) => d !== domainOf(a.website)).slice(0, 2);
+  lines.push(`I put it in a short report: every answer word for word, the websites the AI relied on to decide${srcs.length ? ` (${listJoin(srcs)} came up most)` : ""}, and five specific changes that would get you named more often. Want me to send it over? It's free.`);
+  lines.push("", "Salman Lakhani", "LLCreativity LLC, 11185 Egeria Dr, Odessa, FL 33556", "", `If you'd rather not hear from me, reply "no" and I won't email again.`);
+  const subject = v === "jeweler" ? `Asked AI where to buy an engagement ring in ${city}` : v === "tax_prep" ? `Asked AI for a tax preparer in ${city}` : `Asked AI for a CPA in ${city}`;
+  return { subject, body: lines.join("\n") };
+}
+
+async function runProspectAudits(limit: number) {
+  const running = (await sql`select count(*)::int as n from cited.audits where status in ('queued','running') and source = 'prospect'`)[0].n as number;
+  const room = Math.max(0, limit - running);
+  if (!room) return { started: 0, running };
+  const ps = await sql`select p.* from cited.prospects p where p.status = 'new' and p.audit_id is null and p.contact_email is not null
+    and not exists (select 1 from cited.suppressions s where s.email = lower(p.contact_email)) order by p.created_at limit ${room}`;
+  for (const p of ps) {
+    const ins = await sql`insert into cited.audits (firm_name, website, city, state, vertical, source)
+      values (${p.firm_name}, ${p.website}, ${p.city}, ${p.state}, ${p.vertical}, 'prospect') returning id`;
+    await sql`update cited.prospects set audit_id = ${ins[0].id}, status = 'auditing' where id = ${p.id}`;
+    bg(runAudit(ins[0].id as string));
+  }
+  return { started: ps.length, running };
+}
+
+async function draftProspects() {
+  const ps = await sql`select p.*, a.status as a_status, a.result, a.firm_name as a_firm, a.city as a_city, a.vertical as a_vertical, a.website as a_website
+    from cited.prospects p join cited.audits a on a.id = p.audit_id where p.status = 'auditing' and a.status in ('done','error')`;
+  let drafted = 0, skipped = 0, failed = 0;
+  for (const p of ps) {
+    if (p.a_status === "error") { await sql`update cited.prospects set status = 'audit_error' where id = ${p.id}`; failed++; continue; }
+    const e = composeEmail(p, { result: p.result, firm_name: p.firm_name, city: p.city, vertical: p.vertical, website: p.website });
+    if (!e) { await sql`update cited.prospects set status = 'skip_strong' where id = ${p.id}`; skipped++; continue; }
+    await sql`update cited.prospects set status = 'drafted', email_subject = ${e.subject}, email_body = ${e.body} where id = ${p.id}`;
+    drafted++;
+  }
+  return { drafted, skipped, failed };
+}
+
 // ─── Router ───
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -381,6 +449,13 @@ Deno.serve(async (req) => {
     if (!(await internalOk(req))) return json({ error: "unauthorized" }, 401);
     const n = await runRechecks();
     return json({ ok: true, ran: n });
+  }
+
+  if (path === "/internal/prospects") {
+    if (!(await internalOk(req))) return json({ error: "unauthorized" }, 401);
+    const started = await runProspectAudits(Math.max(1, Math.min(4, Number(body.limit ?? 3))));
+    const drafts = await draftProspects();
+    return json({ ok: true, ...started, ...drafts });
   }
 
   if (path === "/audit" || path === "/internal/audit") {
