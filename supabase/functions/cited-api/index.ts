@@ -354,7 +354,7 @@ async function runRechecks(): Promise<number> {
 // ─── Outreach: audit each prospect, then write a first email from its own result ───
 const CHAINS = /\b(jackson hewitt|h&r block|h & r block|liberty tax|1-800accountant|remotebooksonline|turbotax|intuit|bench|pilot|kay jewelers|kay\b|zales|jared|helzberg|shane co|brilliant earth|blue nile|ben bridge|pandora|costco|macy|walmart|sam's club|jcpenney|signet|tiffany)/i;
 const TOPICS: Record<Vertical, string[]> = {
-  cpa: ["best CPA firm", "an accountant for a small business", "a self-employed tax preparer", "small business tax planning", "help with an IRS letter", "an accounting firm for a growing company"],
+  cpa: ["the best CPA firm", "an accountant for a small business", "a self-employed tax preparer", "small business tax planning", "help with an IRS letter", "an accounting firm for a growing company"],
   tax_prep: ["a good tax preparer", "taxes for someone self-employed", "help with an IRS letter", "an enrolled agent", "getting taxes done for a fair price", "small business bookkeeping"],
   jeweler: ["where to buy an engagement ring", "a jeweler for custom engagement rings", "jewelry repair", "an anniversary gift", "a trustworthy independent jewelry store", "wedding bands"],
 };

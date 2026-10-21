@@ -65,7 +65,7 @@ function wireCheckForm(defaultVertical) {
     try {
       const r = await api("/audit", { method: "POST", body: JSON.stringify({ vertical: defaultVertical, ...fd, source: new URLSearchParams(location.search).get("src") || "site" }) });
       if (!r.id) throw new Error("No report was created. Try again.");
-      location.href = "/r.html?id=" + r.id;
+      location.href = "r.html?id=" + r.id;
     } catch (err) {
       status.textContent = err.message; status.className = "status err";
       btn.disabled = false; btn.textContent = label;

@@ -8,12 +8,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="wrap">
   <header class="top">
-    <a class="brand" href="/" id="home">Cited<span>AI visibility reports</span></a>
+    <a class="brand" href="./" id="home">Cited<span>AI visibility reports</span></a>
   </header>
   <main id="main" aria-live="polite"><p class="waiting muted">Loading the report…</p></main>
   <footer class="bottom">
@@ -21,7 +21,7 @@
     <p>Cited is made by LLCreativity LLC · 11185 Egeria Dr, Odessa, FL 33556 · <a href="mailto:salman@llcreativityllc.com">salman@llcreativityllc.com</a></p>
   </footer>
 </div>
-<script src="/app.js"></script>
+<script src="app.js"></script>
 <script>
 const main = document.getElementById("main");
 const qs = new URLSearchParams(location.search);
@@ -29,7 +29,7 @@ const id = qs.get("id");
 const t0 = Date.now();
 
 function show(...nodes) { main.replaceChildren(...nodes.filter((n) => n != null)); }
-function fail(msg) { show(h("div", { class: "waiting" }, h("h2", {}, "This report isn't available"), h("p", { class: "muted" }, msg), h("a", { class: "btn", href: "/" }, "Run a new check"))); }
+function fail(msg) { show(h("div", { class: "waiting" }, h("h2", {}, "This report isn't available"), h("p", { class: "muted" }, msg), h("a", { class: "btn", href: "./" }, "Run a new check"))); }
 const money = (c) => "$" + Math.round(c / 100).toLocaleString("en-US");
 
 function waiting(a) {
@@ -72,7 +72,7 @@ function report(a) {
   const qsList = a.queries || [];
   const runs = r.runs || 1;
   const when = new Date(a.finished_at || a.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-  if (v === "jeweler") document.getElementById("home").setAttribute("href", "/jewelers.html");
+  if (v === "jeweler") document.getElementById("home").setAttribute("href", "jewelers.html");
 
   const rows = qsList.map((q, i) => {
     const p = per.find((x) => x.i === i) || { mentioned: false, firms_named: [] };
@@ -138,7 +138,7 @@ async function checkout() {
 
 async function load() {
   if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return fail("The link is missing its report number.");
-  if (qs.get("cs")) { try { await api("/confirm", { method: "POST", body: JSON.stringify({ id, session_id: qs.get("cs") }) }); } catch { /* the report still loads */ } history.replaceState(null, "", "/r.html?id=" + id); }
+  if (qs.get("cs")) { try { await api("/confirm", { method: "POST", body: JSON.stringify({ id, session_id: qs.get("cs") }) }); } catch { /* the report still loads */ } history.replaceState(null, "", "r.html?id=" + id); }
   let a;
   try { a = await api("/audit/" + id); } catch (e) { return fail(e.message); }
   if (a.status === "error") return fail(a.error || "The check didn't finish.");
