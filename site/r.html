@@ -13,11 +13,11 @@
 <body>
 <div class="wrap">
   <header class="top">
-    <a class="brand" href="/">Cited<span>AI visibility for CPA firms</span></a>
+    <a class="brand" href="/" id="home">Cited<span>AI visibility reports</span></a>
   </header>
   <main id="main" aria-live="polite"><p class="waiting muted">Loading the report…</p></main>
   <footer class="bottom">
-    <p>How we check: answers come from Claude, an AI assistant, using live web search at the time of the check. AI answers vary from run to run and between assistants, so treat this as a snapshot, not a ranking.</p>
+    <p>How we check: answers come from Claude, an AI assistant, using live web search at the time of the check. Each question is asked more than once, because AI answers vary between asks and between assistants. Treat this as a snapshot, not a ranking.</p>
     <p>Cited is made by LLCreativity LLC · 11185 Egeria Dr, Odessa, FL 33556 · <a href="mailto:salman@llcreativityllc.com">salman@llcreativityllc.com</a></p>
   </footer>
 </div>
@@ -30,23 +30,16 @@ const t0 = Date.now();
 
 function show(...nodes) { main.replaceChildren(...nodes.filter((n) => n != null)); }
 function fail(msg) { show(h("div", { class: "waiting" }, h("h2", {}, "This report isn't available"), h("p", { class: "muted" }, msg), h("a", { class: "btn", href: "/" }, "Run a new check"))); }
-
-const QUESTIONS = (c, s) => [
-  `Who are the best CPA firms in ${c}, ${s}?`,
-  `Which accountant should a small business in ${c} hire?`,
-  `A tax preparer in ${c} for someone self-employed?`,
-  `Which CPA firm in ${c} is good at small business tax planning?`,
-  `Who do I call in ${c} about an IRS letter?`,
-  `A good accounting firm near ${c} for a growing company?`,
-];
+const money = (c) => "$" + Math.round(c / 100).toLocaleString("en-US");
 
 function waiting(a) {
   const secs = Math.round((Date.now() - t0) / 1000);
-  const on = Math.min(5, Math.floor(secs / 8));
+  const on = Math.min(5, Math.floor(secs / 10));
+  const list = (QUESTION_SETS[a.vertical] || QUESTION_SETS.cpa)(`${a.city}, ${a.state}`);
   show(h("div", { class: "waiting" },
     h("h2", {}, `Checking ${a.firm_name}`),
-    h("p", { class: "muted" }, "An AI assistant is answering these questions with live web search. This usually takes under a minute; keep this page open."),
-    h("ol", {}, QUESTIONS(a.city, a.state).map((q, i) => h("li", { class: i === on ? "on" : null }, q)))));
+    h("p", { class: "muted" }, "An AI assistant is answering these questions with live web search, each one twice. This usually takes about a minute; keep this page open."),
+    h("ol", {}, list.map((q, i) => h("li", { class: i === on ? "on" : null }, q)))));
 }
 
 function copyBox(text) {
@@ -55,15 +48,16 @@ function copyBox(text) {
 }
 
 function fixpack(fp) {
-  if (!fp) return h("section", { class: "block pack" }, h("h2", {}, "Your fix pack"), h("p", { class: "muted" }, "It's being written now. Refresh in a minute; we'll also email it to you."));
+  if (!fp) return h("section", { class: "block pack" }, h("h2", {}, "Your fix pack"), h("p", { class: "muted" }, "It's being written now. This page updates on its own; we'll also email it to you."));
   return h("section", { class: "block pack" },
     h("h2", {}, "Your fix pack"),
-    h("p", { class: "muted" }, "Anything in [BRACKETS] is a fact only you know; fill it in before you publish."),
+    h("p", { class: "muted" }, "Anything in [BRACKETS] is a fact only you know; fill it in before you publish. In 45 days we'll re-run your check and email you the before and after."),
+    fp.vendor_brief ? [h("h3", {}, "Brief to forward to whoever runs your website"), copyBox(fp.vendor_brief)] : null,
     h("h3", {}, "About section for your website"), copyBox(fp.about || ""),
     h("h3", {}, "Google Business Profile description"), copyBox(fp.gbp_description || ""),
     h("h3", {}, "FAQ answers for your website"),
     (fp.faq || []).map((x) => h("details", { class: "ans" }, h("summary", {}, x.q), h("div", { class: "body" }, copyBox(x.a)))),
-    h("h3", {}, "Schema markup (paste into your site's <head>)"), copyBox(fp.schema_jsonld || ""),
+    h("h3", {}, "Schema markup (goes in your site's <head>)"), copyBox(fp.schema_jsonld || ""),
     h("h3", {}, "Listings to claim or update"),
     h("ul", { class: "list" }, (fp.listings || []).map((l) => h("li", {}, h("span", {}, h("b", {}, l.site), " — ", l.action)))),
     h("h3", {}, "Your first 30 days"),
@@ -72,42 +66,52 @@ function fixpack(fp) {
 
 function report(a) {
   const r = a.result || {};
+  const v = a.vertical || "cpa";
   const per = r.per_question || [];
   const answers = a.answers || [];
   const qsList = a.queries || [];
+  const runs = r.runs || 1;
   const when = new Date(a.finished_at || a.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  if (v === "jeweler") document.getElementById("home").setAttribute("href", "/jewelers.html");
 
   const rows = qsList.map((q, i) => {
     const p = per.find((x) => x.i === i) || { mentioned: false, firms_named: [] };
-    const others = (p.firms_named || []).filter((f) => !p.mentioned || p.rank == null || p.firms_named.indexOf(f) !== p.rank - 1);
+    const named = p.named_count ?? (p.mentioned ? 1 : 0);
+    const of = p.runs ?? 1;
+    const others = p.runs != null ? (p.firms_named || []) : (p.firms_named || []).filter((f, j) => !p.mentioned || p.rank == null || j !== p.rank - 1);
+    const label = runs > 1 ? `${named} of ${of}` : (named ? "✓" : "✗");
     return h("tr", {},
       h("td", {}, h("div", { class: "q" }, q),
-        h("div", { class: "named" }, answers[i] && !answers[i].text ? "The assistant didn't answer this one." : (others.length ? "Named instead: " + others.join(", ") : "No firms named."))),
-      h("td", { class: "mark " + (p.mentioned ? "yes" : "no"), "aria-label": p.mentioned ? "named" : "not named" }, p.mentioned ? "✓" : "✗"));
+        h("div", { class: "named" }, of === 0 ? "The assistant didn't answer this one." : (others.length ? "Named instead: " + others.slice(0, 8).join(", ") : "No one else named."))),
+      h("td", { class: "mark " + (named ? "yes" : "no"), "aria-label": `named in ${named} of ${of}` }, label));
   });
 
   const ledger = h("div", { class: "ledger" }, h("table", {},
-    h("thead", {}, h("tr", {}, h("th", {}, "What a prospect asked"), h("th", {}, a.firm_name))),
+    h("thead", {}, h("tr", {}, h("th", {}, `What a ${CUSTOMER[v]} asked`), h("th", {}, a.firm_name))),
     h("tbody", {}, rows),
     h("tfoot", {}, h("tr", {}, h("td", {}, "Named in"), h("td", { class: "mark", style: "font-size:16px" }, `${r.mentioned ?? 0} of ${r.asked ?? qsList.length}`)))),
-    h("div", { class: "caption" }, a.website ? `Your website was used as a source in ${r.cited_as_source ?? 0} of ${r.asked ?? 6} answers.` : "Add your website to a new check to see whether the AI uses your own site as a source."));
+    h("div", { class: "caption" }, a.website ? `Your website was used as a source in ${r.cited_as_source ?? 0} of ${r.asked ?? 0} answers.` : `Add your website to a new check to see whether the AI uses your own site as a source.`));
 
-  const cta = a.paid ? null : h("div", { class: "cta" },
-    h("h2", {}, "Want us to fix it?"),
-    h("p", {}, "For $149 a month you get the fix pack today — About text, Google Business Profile description, eight AI-ready FAQ answers, schema markup and a 30-day plan — and this check re-run every month so you can see it working. Cancel anytime."),
-    h("button", { class: "btn", type: "button", onclick: checkout }, "Start for $149/month"),
+  const price = money(a.price_cents || 29700);
+  const cta = a.paid || a.parent_id ? null : h("div", { class: "cta" },
+    h("h2", {}, "Want us to write the fix?"),
+    h("p", {}, `${price}, one time. You get the fix pack today: an About section, Google Business Profile description, eight FAQ answers written for AI questions, schema markup, and a brief you can forward to whoever runs your website. We re-run this check 45 days later; if you aren't named more often, you get a full refund.`),
+    h("button", { class: "btn", type: "button", onclick: checkout }, `Get the fix pack for ${price}`),
     h("p", { class: "status", id: "paystatus", style: "margin-top:12px" }));
+
+  // Group the full answers by question.
+  const byQ = qsList.map((q, i) => ({ q, items: answers.filter((x, j) => (x.qi ?? j) === i) }));
 
   show(
     h("div", { class: "rep-head" },
-      h("p", { class: "muted small" }, `AI visibility check for ${a.firm_name}, ${a.city}, ${a.state} — ${when}`),
-      h("p", { class: "score" }, `Named in ${r.mentioned ?? 0} `, h("span", { class: "of" }, `of ${r.asked ?? 6} answers`)),
+      h("p", { class: "muted small" }, `${a.parent_id ? "45-day re-check" : "AI visibility check"} for ${a.firm_name}, ${a.city}, ${a.state} — ${when}`),
+      h("p", { class: "score" }, `Named in ${r.mentioned ?? 0} `, h("span", { class: "of" }, `of ${r.asked ?? 0} answers`)),
       r.headline ? h("p", { class: "lede" }, r.headline) : null),
     h("div", { class: "cols2" },
       h("div", {}, ledger),
       h("div", {},
-        h("h3", {}, "Firms the AI named most"),
-        h("ul", { class: "list" }, (r.competitors || []).slice(0, 8).map((c) => h("li", {}, h("span", {}, c.name), h("span", {}, `${c.times_named} of ${r.asked ?? 6}`)))),
+        h("h3", {}, `Named most often instead`),
+        h("ul", { class: "list" }, (r.competitors || []).slice(0, 8).map((c) => h("li", {}, h("span", {}, c.name), h("span", {}, `${c.times_named} of ${r.asked ?? 0}`)))),
         h("h3", { style: "margin-top:26px" }, "Websites it trusted to decide"),
         h("ul", { class: "list" }, (r.source_domains || []).slice(0, 8).map((d) => h("li", {}, h("span", {}, d.domain), h("span", {}, `${d.answers} answer${d.answers === 1 ? "" : "s"}`)))))),
     h("section", { class: "block", style: "margin-top:48px" },
@@ -117,10 +121,12 @@ function report(a) {
     a.paid ? fixpack(a.fixpack) : null,
     h("section", { class: "block" },
       h("h2", {}, "The full answers"),
-      h("p", { class: "muted" }, "Exactly what the assistant said, and the pages it read."),
-      answers.map((x) => h("details", { class: "ans" }, h("summary", {}, x.q),
-        h("div", { class: "body" }, (x.text || "No answer.").replace(/\*\*/g, "")),
-        x.sources && x.sources.length ? h("div", { class: "src" }, "Sources: ", x.sources.map((s, i) => [i ? ", " : "", h("a", { href: s.url, rel: "nofollow noopener", target: "_blank" }, s.title || s.url)])) : null))));
+      h("p", { class: "muted" }, "Exactly what the assistant said each time, and the pages it read."),
+      byQ.map(({ q, items }) => h("details", { class: "ans" }, h("summary", {}, q),
+        items.map((x, k) => h("div", {},
+          items.length > 1 ? h("p", { class: "small muted", style: "margin:12px 0 0" }, `Ask ${k + 1}`) : null,
+          h("div", { class: "body" }, (x.text || "No answer.").replace(/\*\*/g, "")),
+          x.sources && x.sources.length ? h("div", { class: "src" }, "Sources: ", x.sources.map((s, i) => [i ? ", " : "", h("a", { href: s.url, rel: "nofollow noopener", target: "_blank" }, s.title || s.url)])) : null))))));
 }
 
 async function checkout() {

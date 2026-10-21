@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cited — does AI recommend your jewelry store?</title>
+<meta name="description" content="Free check: we ask an AI assistant the six questions ring shoppers ask about jewelers in your town, twice each, and show you which stores it names instead of yours.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/jewelers.html">Cited<span>AI visibility reports</span></a>
+    <nav><a href="#how">How the check works</a><a href="#price">Price</a><a href="/">For CPA firms</a></nav>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>When someone asks AI where to buy an engagement ring in your town, does it say your store?</h1>
+      <p class="lede">Ring shoppers now ask ChatGPT and other assistants before they ever walk in. We ask an AI assistant the six questions your customers ask, twice each, and show you which jewelers it recommends instead of you. Free, in about a minute.</p>
+
+      <form class="check" id="check" novalidate>
+        <div class="full"><label for="firm">Store name</label><input id="firm" name="firm_name" autocomplete="organization" required></div>
+        <div class="two"><label for="city">City</label><input id="city" name="city" autocomplete="address-level2" required></div>
+        <div><label for="state">State</label><select id="state" name="state" required><option value="">—</option></select></div>
+        <div class="full"><label for="website">Website <small>(optional, lets us check if AI cites your site)</small></label><input id="website" name="website" inputmode="url" placeholder="yourstore.com"></div>
+        <div class="full"><label for="email">Email <small>(optional, we'll send you the report)</small></label><input id="email" name="email" type="email" autocomplete="email"></div>
+        <input type="text" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+        <div class="full"><button class="btn" type="submit">Check my store</button></div>
+      </form>
+      <p class="status" id="status" aria-live="polite"></p>
+    </div>
+
+    <figure class="ledger" style="margin:0" aria-label="Example report ledger">
+      <table>
+        <thead><tr><th>What a shopper asked</th><th>Your store</th></tr></thead>
+        <tbody>
+          <tr><td><div class="q">Best place to buy an engagement ring in Clearwater?</div><div class="named">Named: Bayside Diamond Co., Laurel &amp; Finch, <span class="strike">your store</span></div></td><td class="mark yes" aria-label="named in 1 of 2">1 of 2</td></tr>
+          <tr><td><div class="q">A local jeweler who does custom engagement rings?</div><div class="named">Named: Laurel &amp; Finch, Gulfline Custom Jewelry</div></td><td class="mark no" aria-label="named in 0 of 2">0 of 2</td></tr>
+          <tr><td><div class="q">Who does reliable jewelry repair in Clearwater?</div><div class="named">Named: Bayside Diamond Co., a mall repair kiosk</div></td><td class="mark no" aria-label="named in 0 of 2">0 of 2</td></tr>
+          <tr><td><div class="q">Where should we buy wedding bands?</div><div class="named">Named: Laurel &amp; Finch, a national chain</div></td><td class="mark no" aria-label="named in 0 of 2">0 of 2</td></tr>
+        </tbody>
+        <tfoot><tr><td>Named in</td><td class="mark" style="font-size:16px">1 of 8</td></tr></tfoot>
+      </table>
+      <figcaption class="caption">Example with made-up stores. Your report shows every question, every store the AI named, and the websites it got its answer from.</figcaption>
+    </figure>
+  </div>
+
+  <section class="block" id="how">
+    <h2>How the check works</h2>
+    <div class="steps">
+      <div><h3>We ask what your customers ask</h3><p>Six plain questions — engagement rings, custom design, repair, an anniversary gift, wedding bands — put to an AI assistant that searches the web live. Each one twice, because AI answers change from one ask to the next.</p></div>
+      <div><h3>We record who it names</h3><p>For every answer you see whether your store was named, which stores were named instead, and which websites the assistant trusted to decide.</p></div>
+      <div><h3>We show you what to fix</h3><p>Five specific changes based on what the answers relied on: the review sites, the pages and the wording that got the other stores named.</p></div>
+    </div>
+  </section>
+
+  <section class="block" id="price">
+    <h2>Get named before engagement season</h2>
+    <p class="muted" style="max-width:40em">More proposals happen in December than in any other month. The check is free. If you want the fix written for you, it's one payment, no subscription.</p>
+    <div class="price">
+      <div>
+        <div class="amt">$297 <small>one time</small></div>
+        <ul>
+          <li>Your fix pack the same day: an About section, Google Business Profile description, eight FAQ answers written for AI questions, and schema markup</li>
+          <li>A ready-to-forward brief for whoever runs your website, so you don't have to do the technical part</li>
+          <li>A re-check 45 days later. If your store isn't named more often, you get a full refund.</li>
+        </ul>
+      </div>
+      <a class="btn" href="#check">Start with the free check</a>
+    </div>
+  </section>
+
+  <footer class="bottom">
+    <p>How we check: answers come from Claude, an AI assistant, using live web search at the moment you run the check. Each question is asked twice. AI answers vary between asks and between assistants, so treat one check as a snapshot, not a ranking. We don't contact anyone on your behalf.</p>
+    <p>Cited is made by LLCreativity LLC · 11185 Egeria Dr, Odessa, FL 33556 · <a href="mailto:salman@llcreativityllc.com">salman@llcreativityllc.com</a></p>
+  </footer>
+</div>
+<script src="/app.js"></script>
+<script>wireCheckForm("jeweler");</script>
+</body>
+</html>
